@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HAYMAF Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#151211;
+    --panel:#1d1917;
+    --panel-line:#332c27;
+    --paper:#efe7d8;
+    --paper-dim:#a89a85;
+    --gold:#b8923f;
+    --gold-bright:#d9b45c;
+    --wine:#7a2530;
+    --wine-bright:#a3323f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(184,146,63,0.10), transparent 60%),
+      var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    padding:48px 20px 80px;
+  }
+  .wrap{ max-width:760px; margin:0 auto; }
+
+  header{ text-align:center; margin-bottom:40px; }
+  .seal{
+    width:56px; height:56px; margin:0 auto 20px;
+    border:2px solid var(--gold);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Cinzel', serif;
+    font-size:20px; font-weight:700; color:var(--gold-bright);
+    box-shadow: 0 0 0 4px rgba(184,146,63,0.12), inset 0 0 0 1px rgba(184,146,63,0.35);
+  }
+  h1{
+    font-family:'Cinzel', serif;
+    font-weight:700;
+    font-size:clamp(30px, 6vw, 44px);
+    letter-spacing:0.02em;
+    margin:0 0 8px;
+    color:var(--paper);
+  }
+  .sub{
+    color:var(--paper-dim);
+    font-size:15px;
+    max-width:420px;
+    margin:0 auto;
+    line-height:1.5;
+  }
+
+  .toolbar{
+    display:flex; gap:10px; align-items:center;
+    margin-bottom:18px;
+  }
+  #search{
+    flex:1;
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    color:var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    padding:11px 14px;
+    border-radius:3px;
+    outline:none;
+  }
+  #search::placeholder{ color:var(--paper-dim); }
+  #search:focus{ border-color:var(--gold); }
+  .count{ color:var(--paper-dim); font-size:13px; white-space:nowrap; font-family:'IBM Plex Mono', monospace; }
+
+  .board{
+    background:var(--panel);
+    border:1px solid var(--panel-line);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  table{ width:100%; border-collapse:collapse; }
+  thead th{
+    text-align:left;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-weight:600;
+    font-size:12.5px;
+    color:var(--paper-dim);
+    padding:13px 16px;
+    border-bottom:1px solid var(--panel-line);
+    cursor:pointer;
+    user-select:none;
+    white-space:nowrap;
+  }
+  thead th:hover{ color:var(--gold-bright); }
+  thead th.active{ color:var(--gold-bright); }
+  thead th .arrow{ font-size:10px; margin-left:3px; opacity:0.8; }
+  th.num, td.num{ text-align:right; }
+
+  tbody tr{ border-bottom:1px solid var(--panel-line); }
+  tbody tr:last-child{ border-bottom:none; }
+  tbody tr:hover{ background:rgba(184,146,63,0.05); }
+  td{ padding:12px 16px; font-size:14.5px; vertical-align:middle; }
+
+  .rank{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--paper-dim);
+    width:44px;
+  }
+  tr.r1 .rank, tr.r2 .rank, tr.r3 .rank{ color:var(--gold-bright); font-weight:600; }
+
+  .name{ font-weight:500; }
+  tr.r1 .name{ color:var(--gold-bright); }
+
+  .points{ font-family:'IBM Plex Mono', monospace; font-weight:500; color:var(--paper); }
+  .games{ font-family:'IBM Plex Mono', monospace; color:var(--paper-dim); font-size:13px; }
+
+  .bar-cell{ width:120px; }
+  .bar-track{
+    background:var(--panel-line);
+    height:4px; border-radius:2px; overflow:hidden;
+  }
+  .bar-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--wine), var(--gold));
+    border-radius:2px;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:28px;
+    color:var(--paper-dim);
+    font-size:12.5px;
+    font-family:'IBM Plex Mono', monospace;
+  }
+
+  @media (max-width:520px){
+    .games, th.games-col{ display:none; }
+    td, thead th{ padding:11px 10px; }
+    .bar-cell{ width:70px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="seal">HM</div>
+    <h1>HAYMAF Leaderboard</h1>
+    <p class="sub">Standings for the mafia game club, ranked by total points across every game played.</p>
+  </header>
+
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="Find a player…">
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="board">
+    <table>
+      <thead>
+        <tr>
+          <th class="rank-col" data-key="rank">#</th>
+          <th data-key="name">Player</th>
+          <th class="num" data-key="points">Points<span class="arrow"></span></th>
+          <th class="num games-col" data-key="games">Games</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <footer>Updated after every game night</footer>
+</div>
+
+<script>
+const players = [{"rank": 1, "name": "mehran", "points": 645, "games": 7}, {"rank": 2, "name": "mehdi dr", "points": 635, "games": 7}, {"rank": 3, "name": "alek", "points": 570, "games": 8}, {"rank": 4, "name": "amin", "points": 560, "games": 10}, {"rank": 5, "name": "meghri", "points": 480, "games": 2}, {"rank": 6, "name": "kimia", "points": 460, "games": 8}, {"rank": 7, "name": "hiberd", "points": 425, "games": 5}, {"rank": 8, "name": "ani andreasyan", "points": 390, "games": 7}, {"rank": 9, "name": "milad", "points": 380, "games": 7}, {"rank": 10, "name": "patrik", "points": 370, "games": 2}, {"rank": 11, "name": "alex", "points": 360, "games": 2}, {"rank": 12, "name": "mansour", "points": 300, "games": 5}, {"rank": 13, "name": "mehdi(kimia)", "points": 280, "games": 6}, {"rank": 14, "name": "erfan", "points": 270, "games": 3}, {"rank": 15, "name": "gevork", "points": 255, "games": 5}, {"rank": 16, "name": "ares", "points": 245, "games": 5}, {"rank": 17, "name": "artin", "points": 220, "games": 4}, {"rank": 18, "name": "mahsa", "points": 170, "games": 5}, {"rank": 19, "name": "kamyar", "points": 160, "games": 2}, {"rank": 20, "name": "fateme(ESF)", "points": 150, "games": 2}, {"rank": 21, "name": "aryan", "points": 140, "games": 4}, {"rank": 22, "name": "sina", "points": 135, "games": 2}, {"rank": 23, "name": "omid ghahremanzade", "points": 110, "games": 2}, {"rank": 24, "name": "matin", "points": 90, "games": 2}, {"rank": 25, "name": "dion", "points": 70, "games": 1}, {"rank": 26, "name": "rose", "points": 20, "games": 1}, {"rank": 27, "name": "mohamad majlesi", "points": 15, "games": 1}, {"rank": 28, "name": "serli", "points": 0, "games": 0}, {"rank": 29, "name": "mamad bayat", "points": 0, "games": 0}, {"rank": 30, "name": "arpa kh", "points": 0, "games": 0}, {"rank": 31, "name": "argine", "points": 0, "games": 0}, {"rank": 32, "name": "alireza", "points": 0, "games": 0}, {"rank": 33, "name": "arvin", "points": 0, "games": 0}, {"rank": 34, "name": "gayane", "points": 0, "games": 0}, {"rank": 35, "name": "amoo milad", "points": 0, "games": 0}, {"rank": 36, "name": "Rasoul", "points": 0, "games": 0}, {"rank": 37, "name": "Sion", "points": 0, "games": 0}, {"rank": 38, "name": "mohamdreza Soltani", "points": 0, "games": 0}, {"rank": 39, "name": "arame eyvazian", "points": 0, "games": 0}, {"rank": 40, "name": "anika", "points": 0, "games": 0}, {"rank": 41, "name": "peyman", "points": 0, "games": 0}, {"rank": 42, "name": "ardalan", "points": 0, "games": 0}, {"rank": 43, "name": "pouya", "points": 0, "games": 0}, {"rank": 44, "name": "arsalan", "points": 0, "games": 0}, {"rank": 45, "name": "vedi", "points": 0, "games": 0}, {"rank": 46, "name": "negar", "points": 0, "games": 0}, {"rank": 47, "name": "emad", "points": 0, "games": 0}, {"rank": 48, "name": "paniz", "points": 0, "games": 0}, {"rank": 49, "name": "kian", "points": 0, "games": 0}, {"rank": 50, "name": "mobina", "points": 0, "games": 0}, {"rank": 51, "name": "aida", "points": 0, "games": 0}, {"rank": 52, "name": "farshad (aida)", "points": 0, "games": 0}, {"rank": 53, "name": "taha", "points": 0, "games": 0}, {"rank": 54, "name": "abtin", "points": 0, "games": 0}, {"rank": 55, "name": "reza", "points": 0, "games": 0}, {"rank": 56, "name": "elham", "points": 0, "games": 0}, {"rank": 57, "name": "alex alireza", "points": 0, "games": 0}, {"rank": 58, "name": "mohamad Amin(rose)", "points": 0, "games": 0}, {"rank": 59, "name": "Reza(Pouya)", "points": 0, "games": 0}, {"rank": 60, "name": "pouriya eng", "points": 0, "games": 0}, {"rank": 61, "name": "sami", "points": 0, "games": 0}, {"rank": 62, "name": "tolou", "points": 0, "games": 0}, {"rank": 63, "name": "adena", "points": 0, "games": 0}, {"rank": 64, "name": "arpa", "points": 0, "games": 0}, {"rank": 65, "name": "utd", "points": 0, "games": 0}, {"rank": 66, "name": "hadi", "points": 0, "games": 0}, {"rank": 67, "name": "amir", "points": 0, "games": 0}, {"rank": 68, "name": "amirhosein", "points": 0, "games": 0}, {"rank": 69, "name": "ati", "points": 0, "games": 0}, {"rank": 70, "name": "shakila", "points": 0, "games": 0}, {"rank": 71, "name": "arman eskandari", "points": 0, "games": 0}, {"rank": 72, "name": "arame", "points": 0, "games": 0}, {"rank": 73, "name": "vanand", "points": 0, "games": 0}];
+
+const maxPoints = Math.max(...players.map(p => p.points), 1);
+let sortKey = 'points';
+let sortDir = -1; // -1 desc, 1 asc
+
+const rowsEl = document.getElementById('rows');
+const countEl = document.getElementById('count');
+const searchEl = document.getElementById('search');
+const headers = document.querySelectorAll('thead th[data-key]');
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  let list = players.filter(p => p.name.toLowerCase().includes(q));
+
+  list = list.slice().sort((a,b) => {
+    let va = a[sortKey], vb = b[sortKey];
+    if (typeof va === 'string'){ va = va.toLowerCase(); vb = vb.toLowerCase(); }
+    if (va < vb) return -1 * sortDir;
+    if (va > vb) return 1 * sortDir;
+    return a.rank - b.rank;
+  });
+
+  rowsEl.innerHTML = list.map(p => {
+    const rCls = p.rank <= 3 ? ' r' + p.rank : '';
+    const pct = Math.max(2, Math.round((p.points / maxPoints) * 100));
+    return `<tr class="${rCls.trim()}">
+      <td class="rank">${p.rank}</td>
+      <td class="name">${escapeHtml(p.name)}</td>
+      <td class="num bar-cell">
+        <div class="points">${p.points}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      </td>
+      <td class="num games-col games">${p.games}</td>
+    </tr>`;
+  }).join('');
+
+  countEl.textContent = list.length + ' of ' + players.length;
+
+  headers.forEach(h => {
+    h.classList.toggle('active', h.dataset.key === sortKey);
+    const arrow = h.querySelector('.arrow');
+    if (arrow) arrow.textContent = h.dataset.key === sortKey ? (sortDir === 1 ? '▲' : '▼') : '';
+  });
+}
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+headers.forEach(h => {
+  h.addEventListener('click', () => {
+    const key = h.dataset.key;
+    if (sortKey === key){ sortDir *= -1; }
+    else { sortKey = key; sortDir = (key === 'name') ? 1 : -1; }
+    render();
+  });
+});
+
+searchEl.addEventListener('input', render);
+
+render();
+</script>
+</body>
+</html>
